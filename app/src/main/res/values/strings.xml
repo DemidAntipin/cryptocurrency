@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">GetUSDRate</string>
+    <string name="refresh_rate">refresh</string>
+    <string name="usd_rate">Курс $ к биткоину:</string>
+    <string name="target_rate_empty">Target rate is empty</string>
+    <string name="current_rate_empty">Current rate is empty</string>
+    <string name="subscribe">subscribe</string>
+    <string name="target_rate">1 BTC к </string>
+    <string name="coin">BTC</string>
+    <string-array name="currency">
+        <item>USD</item>
+        <item>RUB</item>
+        <item>JPY</item>
+    </string-array>
+</resources>
