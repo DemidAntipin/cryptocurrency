@@ -12,7 +12,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
-
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 
 class RateCheckService : Service() {
     val handler = Handler(Looper.getMainLooper())
@@ -39,11 +44,13 @@ class RateCheckService : Service() {
                 try {
                     val currentRateUSD = BigDecimal.valueOf(currentRate.USD)
                     Log.d(TAG, "Current rate as BigDecimal: $currentRateUSD")
-                    if (currentRateUSD >= targetRate) {
-                        Log.d(TAG, "Target rate reached: $currentRateUSD >= $targetRate")
-                        handler.post {
-                            Toast.makeText(this@RateCheckService, "BTC Достигнули $targetRate$", Toast.LENGTH_SHORT).show()
-                        }
+                    val isPositiveChange = currentRateUSD - startRate >= targetRate
+                    val isNegativeChange = currentRateUSD - startRate <= -targetRate
+
+                    if (isPositiveChange || isNegativeChange) {
+                        val message = "Курс BTC изменился на $$targetRate"
+                        val icon = if (isPositiveChange) R.drawable.up else R.drawable.down
+                        sendNotification("Изменение курса", message, icon)
                         stopSelf()
                     } else {
                         rateCheckAttempt++
@@ -65,6 +72,36 @@ class RateCheckService : Service() {
                 stopSelf()
             }
         }
+    }
+
+    private fun sendNotification(title: String, message: String, iconResId: Int) {
+        val notificationId = 1
+        val channelId = "BTC_CHANNEL_ID"
+
+        // Создание Intent для открытия приложения при нажатии на уведомление
+        val intent = Intent(this@RateCheckService, MainActivity::class.java)
+
+        // Указываем FLAG_IMMUTABLE
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+        // Создание уведомления
+        val notificationBuilder = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(iconResId) // Установка иконки уведомления в зависимости от изменения
+            .setContentTitle(title)
+            .setContentText(message)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        // Создание канала уведомлений для Android 8.0 и выше
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "BTC Notifications", NotificationManager.IMPORTANCE_DEFAULT)
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        // Отправка уведомления
+        val notificationManager = NotificationManagerCompat.from(this)
+        notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
     override fun onBind(p0: Intent?): IBinder? = null
