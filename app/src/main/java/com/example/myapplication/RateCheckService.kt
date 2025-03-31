@@ -33,9 +33,7 @@ class RateCheckService : Service() {
         }
 
         GlobalScope.launch(Dispatchers.IO) {
-            Log.d(TAG, "SUDA NAHUI")
             val currentRate = rateCheckInteractor.requestRate()
-            Log.d(TAG, "Current rate: ${currentRate.USD}")
 
             if (currentRate.USD > 0) {
                 try {
